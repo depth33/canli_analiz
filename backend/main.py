@@ -1,56 +1,64 @@
-import os, requests
+import os
+import requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+# CORS (frontend ile konuşabilmesi için)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://canli-analiz.vercel.app"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# API-Football bilgileri
+RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
+RAPIDAPI_HOST = os.getenv("RAPIDAPI_HOST", "api-football-v1.p.rapidapi.com")
+RAPIDAPI_URL = os.getenv("RAPIDAPI_URL", "https://api-football-v1.p.rapidapi.com/v3")
+
+
+def get_headers():
+    return {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": RAPIDAPI_HOST,
+    }
+
+
 @app.get("/")
 def home():
-    return {"status": "Backend çalışıyor 🚀"}
+    return {"status": "Backend çalışıyor", "api": "API-Football bağlı"}
 
-def safe_json(resp):
-    try:
-        return resp.json()
-    except Exception:
-        return resp.text
 
-@app.get("/env-check")
-def env_check():
-    key = os.getenv("RAPIDAPI_KEY") or ""
-    host = os.getenv("RAPIDAPI_HOST")
-    url  = os.getenv("RAPIDAPI_URL")
-    # key'i maskele
-    masked = (key[:4] + "..." + key[-4:]) if key else None
-    return {"RAPIDAPI_KEY(masked)": masked, "RAPIDAPI_HOST": host, "RAPIDAPI_URL": url}
+# 1. Canlı maçlar
+@app.get("/live-stats")
+def live_stats():
+    url = f"{RAPIDAPI_URL}/fixtures?live=all"
+    response = requests.get(url, headers=get_headers(), timeout=15)
+    return response.json()
 
-@app.get("/live-matches")
-def live_matches():
-    api_key = os.getenv("RAPIDAPI_KEY")
-    api_host = os.getenv("RAPIDAPI_HOST")
-    api_url  = os.getenv("RAPIDAPI_URL")
 
-    if not api_key:
-        return {"error": "RAPIDAPI_KEY eksik (Render > Environment)"}
-    if not api_host or not api_url:
-        return {"error": "RAPIDAPI_HOST veya RAPIDAPI_URL eksik"}
+# 2. Maç istatistikleri (fixture_id ile)
+@app.get("/fixture-stats/{fixture_id}")
+def fixture_stats(fixture_id: int):
+    url = f"{RAPIDAPI_URL}/fixtures/statistics?fixture={fixture_id}"
+    response = requests.get(url, headers=get_headers(), timeout=15)
+    return response.json()
 
-    headers = {"X-RapidAPI-Key": api_key, "X-RapidAPI-Host": api_host}
-    try:
-        res = requests.get(api_url, headers=headers, timeout=15)
-        return {
-            "status_code": res.status_code,
-            "ok": res.ok,
-            "host": api_host,
-            "url": api_url,
-            "body": safe_json(res),
-        }
-    except Exception as e:
-        return {"error": "request_failed", "message": str(e)}
+
+# 3. Maç olayları (goller, kartlar, değişiklikler)
+@app.get("/fixture-events/{fixture_id}")
+def fixture_events(fixture_id: int):
+    url = f"{RAPIDAPI_URL}/fixtures/events?fixture={fixture_id}"
+    response = requests.get(url, headers=get_headers(), timeout=15)
+    return response.json()
+
+
+# 4. Lig listesi (opsiyonel)
+@app.get("/leagues")
+def leagues():
+    url = f"{RAPIDAPI_URL}/leagues"
+    response = requests.get(url, headers=get_headers(), timeout=15)
+    return response.json()
