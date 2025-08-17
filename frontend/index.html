@@ -1,19 +1,33 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Canlı Analiz</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* küçük dokunuşlar */
+    .container { max-width: 900px; margin: 40px auto; padding: 0 16px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+    .thumb { width:100%; border-radius:10px; margin:8px 0; }
+    .meta { color:#6b7280; font-size:14px; margin:6px 0; }
+    .btn { display:inline-block; background:#007BFF; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; }
+    .btn:hover { background:#0056b3; }
+    .header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>⚽ Canlı Analiz</h1>
-    <button id="getDataBtn">Verileri Getir</button>
-    <div id="result"></div>
+    <div class="header">
+      <h1>⚽ Canlı Maçlar</h1>
+      <button id="refreshBtn" class="btn">Yenile</button>
+    </div>
+
+    <p id="status">Durum: Bekleniyor…</p>
+    <div id="list" class="grid"></div>
   </div>
 
   <script src="script.js"></script>
 </body>
 </html>
-
