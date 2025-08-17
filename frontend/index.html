@@ -2,87 +2,50 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Canlı Analiz</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background:#f7f7f7; }
-    h1 { margin-bottom: 16px; }
-    .search-box { margin: 12px 0 20px; }
-    input { padding: 10px; font-size: 16px; width: 260px; max-width: 80vw; }
-    button { padding: 10px 14px; font-size: 16px; margin-left: 6px; cursor: pointer; }
-    #result { max-width: 760px; margin: 0 auto; text-align: left; }
-    .match-card { background:#fff; border-radius:10px; padding:16px; margin:12px 0; box-shadow:0 2px 8px rgba(0,0,0,.08); }
-    .muted { color:#666; font-size: 13px; }
-    hr { border:0; border-top:1px solid #eee; margin:12px 0; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canlı Maç Analiz</title>
 </head>
 <body>
-  <h1>Takıma Göre Canlı Maç Arama</h1>
+  <h1>Canlı Maç Analiz</h1>
+  <input type="text" id="teamInput" placeholder="Takım adı girin">
+  <button onclick="ara()">Ara</button>
 
-  <div class="search-box">
-    <input type="text" id="teamInput" placeholder="Takım adı girin... (örn: Galatasaray)">
-    <button id="searchBtn">Ara</button>
-  </div>
-
-  <div id="result" class="muted">Takım adını yazıp “Ara”ya basın.</div>
+  <div id="result"></div>
 
   <script>
-    const API = "https://canli-analiz-1-59mx.onrender.com/match-by-team";
-
-    async function searchMatch() {
-      const team = document.getElementById("teamInput").value.trim();
-      const box  = document.getElementById("result");
-
-      if (!team) {
-        box.innerHTML = "<p>Lütfen bir takım adı girin.</p>";
-        return;
-      }
-
-      box.innerHTML = "<p>⏳ Yükleniyor...</p>";
+    async function ara() {
+      const team = document.getElementById("teamInput").value;
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "Yükleniyor...";
 
       try {
-        const res = await fetch(`${API}?team=${encodeURIComponent(team)}`);
-        const data = await res.json();
+        const resp = await fetch(`https://canli-analiz-1-59mx.onrender.com/search-match?team=${team}`);
+        const data = await resp.json();
 
-        if (data.error === "rate_limited") {
-          box.innerHTML = `
-            <p>⚠️ API limiti aşıldı. Biraz sonra tekrar deneyin.</p>
-            ${data.rate_limit ? `<pre class="muted">${JSON.stringify(data.rate_limit, null, 2)}</pre>` : ""}
+        if (data.match) {
+          let html = `
+            <h2>${data.match.home} 🆚 ${data.match.away}</h2>
+            <p><b>Lig:</b> ${data.match.league} (${data.match.country})</p>
+            <p><b>Durum:</b> ${data.match.status} (${data.match.minute}. dk)</p>
+            <p><b>Skor:</b> ${data.match.score}</p>
+            <p><b>Fixture ID:</b> ${data.match.fixture_id}</p>
+            <h3>📊 Maç Yorumu</h3>
+            <ul>
           `;
-          return;
-        }
-        if (data.error) {
-          box.innerHTML = `<p>❌ Hata: ${data.error}</p>`;
-          return;
-        }
-        if (data.message) {
-          box.innerHTML = `<p>${data.message}</p>`;
-          return;
-        }
-        if (!data.results || data.results.length === 0) {
-          box.innerHTML = "<p>Sonuç bulunamadı.</p>";
-          return;
-        }
 
-        box.innerHTML = data.results.map(m => `
-          <div class="match-card">
-            <h2>${m.home} 🆚 ${m.away}</h2>
-            <p><b>Lig:</b> ${m.league} ${m.country ? "(" + m.country + ")" : ""}</p>
-            <p><b>Durum:</b> ${m.status} ${m.minute != null ? "(" + m.minute + ". dk)" : ""}</p>
-            <p><b>Skor:</b> ${m.score}</p>
-            ${m.fixture_id ? `<p class="muted"><b>Fixture ID:</b> ${m.fixture_id}</p>` : ""}
-            <p class="muted">kaynak: ${data.source || "-"}</p>
-          </div>
-        `).join("");
-      } catch (e) {
-        box.innerHTML = `<p>❌ Bağlantı hatası: ${e.message}</p>`;
+          data.yorumlar.forEach(y => {
+            html += `<li>${y}</li>`;
+          });
+
+          html += "</ul>";
+          resultDiv.innerHTML = html;
+        } else {
+          resultDiv.innerHTML = "Maç bulunamadı.";
+        }
+      } catch (err) {
+        resultDiv.innerHTML = "Hata: " + err;
       }
     }
-
-    document.getElementById("searchBtn").addEventListener("click", searchMatch);
-    document.getElementById("teamInput").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") searchMatch();
-    });
   </script>
 </body>
 </html>
