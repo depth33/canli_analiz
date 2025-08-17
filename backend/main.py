@@ -1,64 +1,74 @@
-import os
+from fastapi import FastAPI, Query
 import requests
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import os
 
 app = FastAPI()
 
-# CORS (frontend ile konuşabilmesi için)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# API-Football bilgileri
+# RapidAPI bilgilerini ortam değişkenlerinden alıyoruz
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
-RAPIDAPI_HOST = os.getenv("RAPIDAPI_HOST", "api-football-v1.p.rapidapi.com")
-RAPIDAPI_URL = os.getenv("RAPIDAPI_URL", "https://api-football-v1.p.rapidapi.com/v3")
-
-
-def get_headers():
-    return {
-        "x-rapidapi-key": RAPIDAPI_KEY,
-        "x-rapidapi-host": RAPIDAPI_HOST,
-    }
-
+RAPIDAPI_HOST = "api-football-v1.p.rapidapi.com"
 
 @app.get("/")
 def home():
-    return {"status": "Backend çalışıyor", "api": "API-Football bağlı"}
+    return {"status": "backend çalışıyor"}
 
+# ✅ Tüm canlı maçları getiren endpoint
+@app.get("/live-matches")
+def get_live_matches():
+    url = "https://api-football-v1.p.rapidapi.com/v3/fixtures"
+    querystring = {"live": "all"}
+    headers = {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": RAPIDAPI_HOST
+    }
 
-# 1. Canlı maçlar
-@app.get("/live-stats")
-def live_stats():
-    url = f"{RAPIDAPI_URL}/fixtures?live=all"
-    response = requests.get(url, headers=get_headers(), timeout=15)
-    return response.json()
+    response = requests.get(url, headers=headers, params=querystring)
 
+    if response.status_code != 200:
+        return {"error": f"API isteği başarısız oldu: {response.status_code}"}
 
-# 2. Maç istatistikleri (fixture_id ile)
-@app.get("/fixture-stats/{fixture_id}")
-def fixture_stats(fixture_id: int):
-    url = f"{RAPIDAPI_URL}/fixtures/statistics?fixture={fixture_id}"
-    response = requests.get(url, headers=get_headers(), timeout=15)
-    return response.json()
+    data = response.json()
+    matches = []
 
+    for match in data.get("response", []):
+        matches.append({
+            "fixture": match["fixture"],
+            "league": match["league"],
+            "teams": match["teams"],
+            "goals": match["goals"],
+            "score": match["score"]
+        })
 
-# 3. Maç olayları (goller, kartlar, değişiklikler)
-@app.get("/fixture-events/{fixture_id}")
-def fixture_events(fixture_id: int):
-    url = f"{RAPIDAPI_URL}/fixtures/events?fixture={fixture_id}"
-    response = requests.get(url, headers=get_headers(), timeout=15)
-    return response.json()
+    if not matches:
+        return {"message": "Şu anda canlı maç bulunmuyor."}
 
+    return matches
 
-# 4. Lig listesi (opsiyonel)
-@app.get("/leagues")
-def leagues():
-    url = f"{RAPIDAPI_URL}/leagues"
-    response = requests.get(url, headers=get_headers(), timeout=15)
-    return response.json()
+# ✅ Tek maç istatistiği için endpoint
+@app.get("/match-stats")
+def get_match_stats(fixture_id: int = Query(..., description="Maç fixture ID'si")):
+    url = "https://api-football-v1.p.rapidapi.com/v3/fixtures"
+    querystring = {"id": fixture_id}
+    headers = {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": RAPIDAPI_HOST
+    }
+
+    response = requests.get(url, headers=headers, params=querystring)
+
+    if response.status_code != 200:
+        return {"error": f"API isteği başarısız oldu: {response.status_code}"}
+
+    data = response.json()
+    if not data.get("response"):
+        return {"message": "Bu ID için maç bulunamadı."}
+
+    match = data["response"][0]
+
+    return {
+        "fixture": match["fixture"],
+        "league": match["league"],
+        "teams": match["teams"],
+        "goals": match["goals"],
+        "score": match["score"]
+    }
