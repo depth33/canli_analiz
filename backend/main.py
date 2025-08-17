@@ -1,13 +1,21 @@
 from fastapi import FastAPI
-import os
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+# CORS ayarları
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://canli-analiz.vercel.app"],  # sadece senin frontend domainin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root():
     return {"status": "Backend çalışıyor 🚀"}
 
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))  # Render hangi portu verdiyse onu al
-    uvicorn.run(app, host="0.0.0.0", port=port)
+@app.get("/test")
+def test_api():
+    return {"message": "Frontend ve Backend bağlantısı başarılı ✅"}
