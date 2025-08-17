@@ -3,53 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <title>Canlı Analiz</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    input { padding: 10px; font-size: 16px; }
-    button { padding: 10px 15px; font-size: 16px; margin-left: 5px; cursor: pointer; }
-    .result { margin-top: 20px; font-size: 18px; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Takıma Göre Canlı Maç Arama</h1>
-  <input type="text" id="teamInput" placeholder="Takım adı girin">
-  <button onclick="searchMatch()">Ara</button>
+  <h1>Canlı Maç Arama</h1>
 
-  <div class="result" id="result"></div>
+  <div class="search-box">
+    <input type="text" id="teamInput" placeholder="Takım adı girin...">
+    <button onclick="searchMatch()">Ara</button>
+  </div>
+
+  <div id="result"></div>
 
   <script>
     async function searchMatch() {
       const team = document.getElementById("teamInput").value.trim();
+      const resultDiv = document.getElementById("result");
+
       if (!team) {
-        alert("Lütfen takım adı girin!");
+        resultDiv.innerHTML = "<p>Lütfen bir takım adı girin.</p>";
         return;
       }
 
-      document.getElementById("result").innerHTML = "Yükleniyor...";
+      resultDiv.innerHTML = "<p>Yükleniyor...</p>";
 
       try {
-        const res = await fetch(`https://canli-analiz-1-59mx.onrender.com/match-by-team?team=${encodeURIComponent(team)}`);
-        const data = await res.json();
+        const response = await fetch(`https://canli-analiz-1-59mx.onrender.com/live-match?team=${encodeURIComponent(team)}`);
+        const data = await response.json();
 
-        if (data.results) {
-          let html = "";
-          data.results.forEach(match => {
-            html += `
-              <p><b>${match.home}</b> vs <b>${match.away}</b></p>
-              <p>Skor: ${match.score}</p>
-              <p>Lig: ${match.league}</p>
-              <p>Durum: ${match.status} (${match.minute}. dk)</p>
-              <hr>
-            `;
-          });
-          document.getElementById("result").innerHTML = html;
+        if (data.error) {
+          resultDiv.innerHTML = `<p>Hata: ${data.error}</p>`;
+        } else if (data.status === "not_found") {
+          resultDiv.innerHTML = "<p>Canlı maç bulunamadı.</p>";
         } else {
-          document.getElementById("result").innerHTML = data.message || "Sonuç bulunamadı.";
-        }
-      } catch (err) {
-        document.getElementById("result").innerHTML = "Hata: " + err.message;
-      }
-    }
-  </script>
-</body>
-</html>
+          const match = data.match;
+          resultDiv.innerHTML = `
+            <h2>${match.teams.home.name} vs ${match.teams.away.name}</h2>
+            <p><strong>Ülke:</strong> ${match.league.country}</p>
+            <p><strong>Lig:</strong> ${match.league.name}</p>
+            <p><strong>Durum:</strong> ${match.fixture.status.long} (${match.fixture.
