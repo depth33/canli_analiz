@@ -1,30 +1,30 @@
-import requests
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import requests
 
 app = FastAPI()
 
-# ✅ CORS ayarları
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://canli-analiz.vercel.app"],  
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# ✅ Test endpoint
 @app.get("/")
-def read_root():
-    return {"status": "Backend çalışıyor 🚀"}
+def home():
+    return {"status": "backend çalışıyor"}
 
-# ✅ SofaScore canlı maçları çek
 @app.get("/live-matches")
-def live_matches():
-    url = "https://api.sofascore.com/api/v1/sport/football/events/live"
+def get_live_matches():
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9"
     }
-    response = requests.get(url, headers=headers)
-    return response.json()
 
+    url = "https://api.sofascore.com/api/v1/sport/football/events/live"
+
+    try:
+        res = requests.get(url, headers=headers, timeout=10)
+
+        if res.status_code != 200:
+            return {"error": res.status_code, "text": res.text}
+
+        return res.json()
+
+    except Exception as e:
+        return {"error": "Exception", "message": str(e)}
