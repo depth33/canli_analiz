@@ -2,19 +2,54 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Canlı Maç Analiz</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Canlı Analiz</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    input { padding: 10px; font-size: 16px; }
+    button { padding: 10px 15px; font-size: 16px; margin-left: 5px; cursor: pointer; }
+    .result { margin-top: 20px; font-size: 18px; }
+  </style>
 </head>
 <body>
-  <h1>⚽ Canlı Maç Analiz</h1>
+  <h1>Takıma Göre Canlı Maç Arama</h1>
+  <input type="text" id="teamInput" placeholder="Takım adı girin">
+  <button onclick="searchMatch()">Ara</button>
 
-  <div class="search-box">
-    <input type="text" id="matchIdInput" placeholder="Maç ID girin...">
-    <button onclick="getMatchStats()">Maçı Göster</button>
-  </div>
+  <div class="result" id="result"></div>
 
-  <div id="results"></div>
+  <script>
+    async function searchMatch() {
+      const team = document.getElementById("teamInput").value.trim();
+      if (!team) {
+        alert("Lütfen takım adı girin!");
+        return;
+      }
 
-  <script src="script.js"></script>
+      document.getElementById("result").innerHTML = "Yükleniyor...";
+
+      try {
+        const res = await fetch(`https://canli-analiz-1-59mx.onrender.com/match-by-team?team=${encodeURIComponent(team)}`);
+        const data = await res.json();
+
+        if (data.results) {
+          let html = "";
+          data.results.forEach(match => {
+            html += `
+              <p><b>${match.home}</b> vs <b>${match.away}</b></p>
+              <p>Skor: ${match.score}</p>
+              <p>Lig: ${match.league}</p>
+              <p>Durum: ${match.status} (${match.minute}. dk)</p>
+              <hr>
+            `;
+          });
+          document.getElementById("result").innerHTML = html;
+        } else {
+          document.getElementById("result").innerHTML = data.message || "Sonuç bulunamadı.";
+        }
+      } catch (err) {
+        document.getElementById("result").innerHTML = "Hata: " + err.message;
+      }
+    }
+  </script>
 </body>
 </html>
