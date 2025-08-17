@@ -1,14 +1,13 @@
 from fastapi import FastAPI
+import os
 
-# Uygulama
 app = FastAPI()
 
-# Ana test endpoint
 @app.get("/")
-def home():
+def read_root():
     return {"status": "Backend çalışıyor 🚀"}
 
-# İleride canlı maç analizi endpointleri buraya eklenecek
-@app.get("/test")
-def test():
-    return {"msg": "API başarıyla çalışıyor ✅"}
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))  # Render hangi portu verdiyse onu al
+    uvicorn.run(app, host="0.0.0.0", port=port)
