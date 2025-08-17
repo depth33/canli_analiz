@@ -1,12 +1,8 @@
-from fastapi import FastAPI
-import requests
 import os
+import requests
+from fastapi import FastAPI
 
 app = FastAPI()
-
-API_URL = "https://free-football-soccer-videos.p.rapidapi.com/"
-API_HOST = "free-football-soccer-videos.p.rapidapi.com"
-API_KEY = os.getenv("RAPIDAPI_KEY", "5c917a0525msh5efba96e0642f5ap107857jsnaefe35397696")
 
 
 @app.get("/")
@@ -15,16 +11,16 @@ def home():
 
 
 @app.get("/live-matches")
-def get_live_matches():
-    url = "https://free-football-soccer-videos.p.rapidapi.com/"
+def live_matches():
+    url = "https://api-football-v1.p.rapidapi.com/v3/fixtures?live=all"
     headers = {
-        "X-RapidAPI-Key": API_KEY,
-        "X-RapidAPI-Host": API_HOST
+        "X-RapidAPI-Key": os.getenv("RAPIDAPI_KEY"),
+        "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com"
     }
 
-    response = requests.get(url, headers=headers)
-
-    if response.status_code == 200:
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
         return response.json()
-    else:
-        return {"error": response.status_code, "message": response.text}
+    except Exception as e:
+        return {"error": str(e)}
