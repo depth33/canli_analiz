@@ -2,24 +2,18 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Canlı Maç Analiz</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>⚽ Canlı Maç Analiz</h1>
-  </header>
+  <h1>⚽ Canlı Maç Analiz</h1>
 
-  <main>
-    <div id="matches" class="matches-container">
-      <p>Maçlar yükleniyor...</p>
-    </div>
-  </main>
+  <div class="search-box">
+    <input type="text" id="matchIdInput" placeholder="Maç ID girin...">
+    <button onclick="getMatchStats()">Maçı Göster</button>
+  </div>
 
-  <footer>
-    <p>Powered by API-Football</p>
-  </footer>
+  <div id="results"></div>
 
   <script src="script.js"></script>
 </body>
