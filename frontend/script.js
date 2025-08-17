@@ -1,62 +1,34 @@
-const BACKEND_URL = "https://canli-analiz-1-59mx.onrender.com/live-matches";
-const statusEl = document.getElementById("status");
-const listEl = document.getElementById("list");
-const refreshBtn = document.getElementById("refreshBtn");
-
-async function loadMatches() {
-  statusEl.textContent = "⏳ Veriler alınıyor...";
+async function loadLiveMatches() {
   try {
-    const res = await fetch(BACKEND_URL);
-    const payload = await res.json();
+    const res = await fetch("https://canli-analiz-1-59mx.onrender.com/live-stats");
+    const data = await res.json();
 
-    // bizim backend: { status_code, ok, host, url, body }
-    if (!payload.ok || !payload.body) {
-      statusEl.textContent = `⚠️ Beklenmedik yanıt (code: ${payload.status_code})`;
-      console.log(payload);
-      listEl.innerHTML = "";
+    const container = document.getElementById("matches");
+    container.innerHTML = "";
+
+    if (!data.response || data.response.length === 0) {
+      container.innerHTML = "<p>Şu anda canlı maç bulunmuyor.</p>";
       return;
     }
 
-    const items = Array.isArray(payload.body) ? payload.body : [];
-    statusEl.textContent = `✅ Toplam ${items.length} kayıt`;
+    data.response.forEach(match => {
+      const div = document.createElement("div");
+      div.className = "match-card";
 
-    if (items.length === 0) {
-      listEl.innerHTML = "<p>Şu an listelenecek canlı içerik bulunamadı.</p>";
-      return;
-    }
-
-    // İlk 20 kaydı render edelim
-    listEl.innerHTML = items.slice(0, 20).map(item => {
-      const title = item.title || "Maç";
-      const comp = item.competition?.name || "";
-      const dt = item.date ? new Date(item.date).toLocaleString() : "";
-      const thumb = item.thumbnail || "";
-      const pageUrl = item.url || "#";
-      const embedHtml = item.embed || "";
-
-      return `
-        <div class="card">
-          <h3>${title}</h3>
-          ${comp ? `<div class="meta">🏆 ${comp}</div>` : ""}
-          ${dt ? `<div class="meta">🕒 ${dt}</div>` : ""}
-          ${thumb ? `<img class="thumb" src="${thumb}" alt="${title}">` : ""}
-          <div style="margin:8px 0;">
-            <a class="btn" href="${pageUrl}" target="_blank" rel="noopener">Kaynağa Git</a>
-          </div>
-          ${embedHtml ? `<details style="margin-top:8px;"><summary>▶️ Yayını Göster</summary>${embedHtml}</details>` : ""}
-        </div>
+      div.innerHTML = `
+        <h3>${match.teams.home.name} vs ${match.teams.away.name}</h3>
+        <p><strong>Lig:</strong> ${match.league.name} (${match.league.country})</p>
+        <p><strong>Durum:</strong> ${match.fixture.status.long} (${match.fixture.status.elapsed}' dk)</p>
+        <p><strong>Skor:</strong> ${match.goals.home ?? 0} - ${match.goals.away ?? 0}</p>
       `;
-    }).join("");
 
+      container.appendChild(div);
+    });
   } catch (err) {
-    statusEl.textContent = "❌ Bağlantı hatası: " + err.message;
-    listEl.innerHTML = "";
+    console.error("API hatası:", err);
+    document.getElementById("matches").innerHTML = "<p>Veri yüklenirken hata oluştu.</p>";
   }
 }
 
-// buton ve otomatik yenileme
-refreshBtn.addEventListener("click", loadMatches);
-document.addEventListener("DOMContentLoaded", () => {
-  loadMatches();
-  setInterval(loadMatches, 60 * 1000); // 60 sn'de bir yenile
-});
+loadLiveMatches();
+setInterval(loadLiveMatches, 30000); // her 30 saniyede yenile
