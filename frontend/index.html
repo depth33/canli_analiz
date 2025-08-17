@@ -8,11 +8,11 @@
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background:#f7f7f7; }
     h1 { margin-bottom: 16px; }
     .search-box { margin: 12px 0 20px; }
-    input { padding: 10px; font-size: 16px; width: 240px; max-width: 80vw; }
+    input { padding: 10px; font-size: 16px; width: 260px; max-width: 80vw; }
     button { padding: 10px 14px; font-size: 16px; margin-left: 6px; cursor: pointer; }
-    #result { max-width: 720px; margin: 0 auto; text-align: left; }
+    #result { max-width: 760px; margin: 0 auto; text-align: left; }
     .match-card { background:#fff; border-radius:10px; padding:16px; margin:12px 0; box-shadow:0 2px 8px rgba(0,0,0,.08); }
-    .muted { color:#666; }
+    .muted { color:#666; font-size: 13px; }
     hr { border:0; border-top:1px solid #eee; margin:12px 0; }
   </style>
 </head>
@@ -44,11 +44,10 @@
         const res = await fetch(`${API}?team=${encodeURIComponent(team)}`);
         const data = await res.json();
 
-        // Olası yanıtlar: {results:[...]}, {message:"..."}, {error:"..."}, {error:"rate_limited", rate_limit:{...}}
         if (data.error === "rate_limited") {
           box.innerHTML = `
             <p>⚠️ API limiti aşıldı. Biraz sonra tekrar deneyin.</p>
-            <pre class="muted">${JSON.stringify(data.rate_limit || {}, null, 2)}</pre>
+            ${data.rate_limit ? `<pre class="muted">${JSON.stringify(data.rate_limit, null, 2)}</pre>` : ""}
           `;
           return;
         }
@@ -72,6 +71,7 @@
             <p><b>Durum:</b> ${m.status} ${m.minute != null ? "(" + m.minute + ". dk)" : ""}</p>
             <p><b>Skor:</b> ${m.score}</p>
             ${m.fixture_id ? `<p class="muted"><b>Fixture ID:</b> ${m.fixture_id}</p>` : ""}
+            <p class="muted">kaynak: ${data.source || "-"}</p>
           </div>
         `).join("");
       } catch (e) {
