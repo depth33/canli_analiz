@@ -1,30 +1,30 @@
 from fastapi import FastAPI
 import requests
+import os
 
 app = FastAPI()
 
+API_URL = "https://free-football-soccer-videos.p.rapidapi.com/"
+API_HOST = "free-football-soccer-videos.p.rapidapi.com"
+API_KEY = os.getenv("RAPIDAPI_KEY", "5c917a0525msh5efba96e0642f5ap107857jsnaefe35397696")
+
+
 @app.get("/")
 def home():
-    return {"status": "backend çalışıyor"}
+    return {"status": "Backend çalışıyor 🚀"}
+
 
 @app.get("/live-matches")
 def get_live_matches():
+    url = "https://free-football-soccer-videos.p.rapidapi.com/"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/120.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9"
+        "X-RapidAPI-Key": API_KEY,
+        "X-RapidAPI-Host": API_HOST
     }
 
-    url = "https://api.sofascore.com/api/v1/sport/football/events/live"
+    response = requests.get(url, headers=headers)
 
-    try:
-        res = requests.get(url, headers=headers, timeout=10)
-
-        if res.status_code != 200:
-            return {"error": res.status_code, "text": res.text}
-
-        return res.json()
-
-    except Exception as e:
-        return {"error": "Exception", "message": str(e)}
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {"error": response.status_code, "message": response.text}
